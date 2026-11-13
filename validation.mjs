@@ -1,4 +1,4 @@
-import {readFile,appendFile,mkdir,statfs} from 'node:fs/promises';
+import {readFile,appendFile,mkdir} from 'node:fs/promises';
 import {dirname} from 'node:path';
 const path=process.env.KAREN_FORECAST_LOG_PATH||'/tmp/karen-forecast-events.jsonl';
 const base='https://external-api.kalshi.com/trade-api/v2';
