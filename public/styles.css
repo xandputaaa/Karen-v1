@@ -183,3 +183,5 @@ html,body{background:#08090a;color:var(--k-white)}
 /* Keep status notices out of the position form and above the bottom navigation */
 .toast{position:fixed!important;top:auto!important;bottom:calc(112px + env(safe-area-inset-bottom,0px))!important;left:50%!important;transform:translateX(-50%)!important;width:min(calc(100% - 36px),540px)!important;max-height:100px;overflow:auto;z-index:1000;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 8px 28px #0009}
 .toast button[data-action="dismissNotice"]{flex:0 0 auto;border:1px solid #ffffff45;background:#ffffff12;color:inherit;border-radius:50%;width:30px;height:30px;font-size:20px;line-height:1}
+
+.metric-unavailable{color:#92969f;font-size:11px;letter-spacing:.07em;font-weight:600}.meter{align-items:center;justify-content:space-between}.meter .metric-unavailable{white-space:nowrap}
