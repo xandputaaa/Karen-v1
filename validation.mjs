@@ -48,14 +48,24 @@ function executionAudit(finished){
  return {policy:'Choose higher model probability at observed ask; hypothetical one-share immediate fill',quoteObservations:observations.length,distinctContracts:distinct,firstQuotePerContractCount:independent.length,meanHypotheticalGrossPnlPerShare:mean,firstQuotePerContractMeanGrossPnlPerShare:contractMean,firstQuotePerContractWinRate:winRate,feeAdjustedPnl:null,realizedPnl:null,fillRate:null,spreadCostIncludedInAsk:true,limitations:'Unvalidated model-selection diagnostic, not a recommended or profitable strategy. Assumes instantaneous execution at historical asking quotes, with no fees, slippage, latency, quantity or missing quotes. Multiple snapshots per contract are correlated; first-quote summary reduces duplicate counting. Resting orders require independently verified order-book and fill simulation.'}
 }
 export async function forecastStorageProbe(){
- const probePath=dirname(path)+'/.karen-storage-probe-'+process.pid;
+ const directory=dirname(path),probePath=directory+'/.karen-storage-probe-'+process.pid,markerPath=directory+'/.karen-retention-marker';
  const payload='karen-storage-check-'+Date.now();
+ let markerWasPresent=false,markerCreatedAt=null;
  try{
-  await mkdir(dirname(path),{recursive:true});
+  await mkdir(directory,{recursive:true});
+  try{
+   const previous=JSON.parse(await readFile(markerPath,'utf8'));
+   markerWasPresent=previous.type==='karen-storage-retention-marker';
+   markerCreatedAt=previous.createdAt||null;
+  }catch(e){if(e.code!=='ENOENT')throw e}
   await writeFile(probePath,payload,{flag:'wx'});
   const echoed=await readFile(probePath,'utf8');
   await unlink(probePath);
-  return {ok:echoed===payload,writable:echoed===payload,historyLoaded,logPath:path,mountedVolumeExpected:path.startsWith('/data/'),restartRetentionVerified:false,warning:'Read/write test confirms storage access, not survival across a restart.'};
+  if(!markerWasPresent){
+   markerCreatedAt=new Date().toISOString();
+   await writeFile(markerPath,JSON.stringify({type:'karen-storage-retention-marker',createdAt:markerCreatedAt})+'\\n',{flag:'wx'});
+  }
+  return {ok:echoed===payload,writable:echoed===payload,historyLoaded,logPath:path,mountedVolumeExpected:path.startsWith('/data/'),restartRetentionVerified:markerWasPresent&&path.startsWith('/data/'),markerCreatedAt,warning:markerWasPresent?'Storage marker survived a process deployment; forecast content still requires independent audit.':'Marker initialized; restart and repeat check to confirm retention.'};
  }catch(e){
   try{await unlink(probePath)}catch{}
   return {ok:false,writable:false,historyLoaded,logPath:path,mountedVolumeExpected:path.startsWith('/data/'),restartRetentionVerified:false,error:e.message};
