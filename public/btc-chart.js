@@ -44,6 +44,7 @@ function drawBtcChart(){
  const phaseTime=contractStart===null?'—':Math.max(0,Math.min(900,Math.floor((now-contractStart)/1000)));
  const phaseClock=Math.floor(phaseTime/60)+':'+String(phaseTime%60).padStart(2,'0');
 
+ window.dispatchEvent(new CustomEvent('karen:btc-forecast',{detail:{ticker:market?.ticker||null,closeTime:market?.closeTime||null,target:market?.targetVerified?Number(market.target):null,spot:chartState.price,projected:estimate?.end??null,pUp:estimate?.pUp??null,phase,at:now,experimental:true}}));
  const valid=data.length>=2,remaining=seconds===null?'NO ACTIVE CONTRACT':Math.ceil(seconds/60)+'m '+Math.floor(seconds%60)+'s LEFT';
  const low=valid?Math.min(...data.map(x=>x.price)):0,high=valid?Math.max(...data.map(x=>x.price)):1;
  const [bandLo,bandHi]=estimate?estimate.band(seconds):[low,high];
