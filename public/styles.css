@@ -168,3 +168,13 @@ html,body{background:#08090a;color:var(--k-white)}
 .karen-phases>div{display:flex;flex-direction:column;gap:7px;padding:12px;border:1px solid #ffffff25;border-radius:13px;background:#ffffff06;min-width:0}
 .karen-phases small{font-size:10px;color:#9da3ac;letter-spacing:.025em}
 .karen-phases b{font-size:13px;font-variant-numeric:tabular-nums;color:#f4f5f6;overflow-wrap:anywhere}
+
+
+/* Mobile-first manual position entry: avoid inline form-control collisions */
+.position-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;align-items:end;margin:16px 0}
+.position-form label{display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:0;font-size:12px;line-height:1.4;color:#c8c8ce}
+.position-form label:first-child{grid-column:1/-1}
+.position-form input,.position-form select{display:block;width:100%;min-width:0;max-width:100%;height:44px;padding:10px 12px;margin:0;box-sizing:border-box;border:1px solid #ffffff30;border-radius:10px;background:#141419;color:#f6f6f7;font-size:16px;line-height:1.2;appearance:auto}
+.position-form input::placeholder{color:#7f818b}
+.position-form button[type=submit]{grid-column:1/-1;margin:4px 0 0;min-height:46px}
+@media(max-width:430px){.position-form{grid-template-columns:minmax(0,1fr);gap:12px}.position-form label:first-child,.position-form button[type=submit]{grid-column:1}.position-form input,.position-form select{width:100%}}
