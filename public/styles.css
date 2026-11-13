@@ -185,3 +185,9 @@ html,body{background:#08090a;color:var(--k-white)}
 .toast button[data-action="dismissNotice"]{flex:0 0 auto;border:1px solid #ffffff45;background:#ffffff12;color:inherit;border-radius:50%;width:30px;height:30px;font-size:20px;line-height:1}
 
 .metric-unavailable{color:#92969f;font-size:11px;letter-spacing:.07em;font-weight:600}.meter{align-items:center;justify-content:space-between}.meter .metric-unavailable{white-space:nowrap}
+
+/* Compact Kalshi market comparison, inspired by the reference layout. Quotes are costs, not calibrated odds. */
+.market-quote-pair{display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;max-width:100%}
+.market-quote-pair>span{display:inline-flex;align-items:center;min-height:32px;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+.market-up{color:#06170e;background:#10d7a0}.market-down{color:#210709;background:#ff4b57}
+@media(max-width:420px){.market-quote-pair{gap:5px}.market-quote-pair>span{padding:6px 9px;font-size:11px}}
