@@ -38,7 +38,7 @@ function drawBtcChart(){
  const low=valid?Math.min(...data.map(x=>x.price)):0,high=valid?Math.max(...data.map(x=>x.price)):1;
  const [bandLo,bandHi]=estimate?estimate.band(seconds):[low,high];
  const min=Math.min(low,bandLo,...(Number.isFinite(verifiedTargetForScale(market))?[verifiedTargetForScale(market)]:[]))-Math.max((high-low)*.15,2);
- const max=Math.max(high,bandHi,verifiedTargetForScale(market))+Math.max((high-low)*.15,2);
+ const max=Math.max(high,bandHi,...(Number.isFinite(verifiedTargetForScale(market))?[verifiedTargetForScale(market)]:[]))+Math.max((high-low)*.15,2);
  const y=v=>260-(v-min)/Math.max(1,max-min)*220;
  const history=data.map((p,i)=>(i?'L':'M')+(14+i*460/Math.max(1,data.length-1)).toFixed(1)+' '+y(p.price).toFixed(1)).join(' ');
  const future=estimate?Array.from({length:21},(_,i)=>{const t=seconds*i/20;return {x:474+290*i/20,t,y:y(estimate.projected(t)),b:estimate.band(t)}}):[];
