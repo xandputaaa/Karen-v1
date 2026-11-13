@@ -21,3 +21,17 @@ jobs:
           node --check validation.mjs
       - name: Regression suite
         run: npm test
+      - name: Local production smoke test
+        run: |
+          PORT=38761 node server.mjs > /tmp/karen-smoke.log 2>&1 &
+          pid=$!
+          trap 'kill $pid 2>/dev/null || true' EXIT
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl --fail --silent http://127.0.0.1:38761/health > /tmp/karen-health.json; then break; fi
+            sleep 1
+          done
+          node -e "const h=require('/tmp/karen-health.json');if(h.ok!==true||h.tradingExecution!==false)process.exit(1)"
+          curl --fail --silent http://127.0.0.1:38761/ > /tmp/karen-index.html
+          grep -qi '<html' /tmp/karen-index.html
+          curl --fail --silent http://127.0.0.1:38761/app.js > /dev/null
+          curl --fail --silent http://127.0.0.1:38761/styles.css > /dev/null
