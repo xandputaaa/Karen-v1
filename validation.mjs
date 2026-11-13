@@ -1,4 +1,4 @@
-import {readFile,appendFile,mkdir} from 'node:fs/promises';
+import {readFile,appendFile,mkdir,writeFile,unlink} from 'node:fs/promises';
 import {dirname} from 'node:path';
 const path=process.env.KAREN_FORECAST_LOG_PATH||'/tmp/karen-forecast-events.jsonl';
 const base='https://external-api.kalshi.com/trade-api/v2';
@@ -46,5 +46,19 @@ function executionAudit(finished){
  const contractMean=independent.length?independent.reduce((a,x)=>a+x.unitGrossPnl,0)/independent.length:null;
  const winRate=independent.length?independent.filter(x=>x.won).length/independent.length:null;
  return {policy:'Choose higher model probability at observed ask; hypothetical one-share immediate fill',quoteObservations:observations.length,distinctContracts:distinct,firstQuotePerContractCount:independent.length,meanHypotheticalGrossPnlPerShare:mean,firstQuotePerContractMeanGrossPnlPerShare:contractMean,firstQuotePerContractWinRate:winRate,feeAdjustedPnl:null,realizedPnl:null,fillRate:null,spreadCostIncludedInAsk:true,limitations:'Unvalidated model-selection diagnostic, not a recommended or profitable strategy. Assumes instantaneous execution at historical asking quotes, with no fees, slippage, latency, quantity or missing quotes. Multiple snapshots per contract are correlated; first-quote summary reduces duplicate counting. Resting orders require independently verified order-book and fill simulation.'}
+}
+export async function forecastStorageProbe(){
+ const probePath=dirname(path)+'/.karen-storage-probe-'+process.pid;
+ const payload='karen-storage-check-'+Date.now();
+ try{
+  await mkdir(dirname(path),{recursive:true});
+  await writeFile(probePath,payload,{flag:'wx'});
+  const echoed=await readFile(probePath,'utf8');
+  await unlink(probePath);
+  return {ok:echoed===payload,writable:echoed===payload,historyLoaded,logPath:path,mountedVolumeExpected:path.startsWith('/data/'),restartRetentionVerified:false,warning:'Read/write test confirms storage access, not survival across a restart.'};
+ }catch(e){
+  try{await unlink(probePath)}catch{}
+  return {ok:false,writable:false,historyLoaded,logPath:path,mountedVolumeExpected:path.startsWith('/data/'),restartRetentionVerified:false,error:e.message};
+ }
 }
 export function validationReport(){const finished=[...predictions.values()].filter(p=>resolved.has(p.id));const brier=finished.length?finished.reduce((a,p)=>a+resolved.get(p.id).brier,0)/finished.length:null;const accuracy=finished.length?finished.filter(p=>resolved.get(p.id).correct).length/finished.length:null;const buckets=Array.from({length:5},(_,i)=>{const rows=finished.filter(p=>Math.min(4,Math.floor(p.pYes*5))===i);return {range:(i*20)+'–'+((i+1)*20)+'%',count:rows.length,meanPredicted:rows.length?rows.reduce((a,p)=>a+p.pYes,0)/rows.length:null,observedYes:rows.length?rows.reduce((a,p)=>a+resolved.get(p.id).outcome,0)/rows.length:null}});return {ok:true,model:'v0-drift-shrunk-lognormal',validated:false,status:new Set(finished.map(p=>p.ticker)).size>=100?'EVALUATION_IN_PROGRESS':'INSUFFICIENT_OUTCOMES',minimumOutcomesForInitialReview:100,forecastCount:predictions.size,resolvedForecastCount:finished.length,distinctResolvedContracts:new Set(finished.map(p=>p.ticker)).size,meanBrier:brier,observedDirectionalAccuracy:accuracy,calibrationBuckets:buckets,executionAudit:executionAudit(finished),latestForecast:[...predictions.values()].at(-1)||null,lastCycle,lastError,storage:{path,mode:path.startsWith('/tmp/')?'EPHEMERAL':'PERSISTENCE_NOT_VERIFIED',persistentVerified:false,historyLoaded,malformedEvents,error:storageError,warning:'File path alone does not establish durability. Attach a persistent Railway volume or external database and verify restart retention.'},limitations:'Multiple forecasts per contract are correlated. Not out-of-sample validated. Coinbase spot differs from Kalshi settlement index. No fee-adjusted backtest or live-trading claims. Quote-based execution audit is hypothetical, not a strategy P&L.'}}
