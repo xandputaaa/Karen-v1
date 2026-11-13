@@ -8,3 +8,6 @@ test('spot API fails closed and labels source',async()=>{const s=await read('ser
 test('local forecast scoring uses later spot and no synthetic win rate',async()=>{const s=await read('public/app.js');assert.match(s,/settleForecasts/);assert.match(s,/Date\.now\(\)-p\.time<300000/);assert.match(s,/settled\.length/);});
 
 test('approved Demo 2 pages and actions are wired',async()=>{const s=await read('public/app.js');for(const name of ['Terminal','Strategy Lab','Signal Lab','Risk Desk','Data Health','Replay Studio','KAREN Chat'])assert.match(s,new RegExp(name));for(const action of ['replayNext','replayPrev','replayReset','chatForm','scriptedReply'])assert.ok(s.includes(action),action)});
+
+test('Demo 3.2 Kalshi read-only adapter is bounded and fails closed',async()=>{const s=await read('server.mjs');assert.match(s,/\/api\/kalshi\/btc15m/);assert.match(s,/series_ticker=KXBTC15M/);assert.match(s,/status=open/);assert.match(s,/AbortSignal\.timeout\(6500\)/);assert.match(s,/targetVerified/);assert.match(s,/DISCONNECTED/);assert.doesNotMatch(s,/\/portfolio\/orders|\/portfolio\/fills/)});
+test('Demo 3.2 displays contract snapshot with source status',async()=>{const s=await read('public/app.js');for(const key of ['kalshiMarketPanel','refreshKalshi','LIVE SNAPSHOT','NO OPEN MARKET','NOT VERIFIED','DISCONNECTED'])assert.ok(s.includes(key),key)});
