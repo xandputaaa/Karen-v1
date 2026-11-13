@@ -19,6 +19,8 @@ jobs:
         run: |
           node --check server.mjs
           node --check validation.mjs
+          node --check public/app.js
+          node --check public/btc-chart.js
       - name: Regression suite
         run: npm test
       - name: Local production smoke test
