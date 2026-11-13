@@ -44,6 +44,8 @@ async function checkResolution(p){
  }catch(e){lastError='Settlement lookup: '+e.message}
 }
 export async function validationCycle(getMarket){if(!historyLoaded||running)return;running=true;try{const r=await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot',{signal:AbortSignal.timeout(5500)});if(!r.ok)throw Error('Coinbase '+r.status);const data=await r.json(),price=Number(data?.data?.amount);if(!Number.isFinite(price)||price<=0)throw Error('Invalid spot');const now=Date.now();samples.push({at:now,price});while(samples.length>1000||samples[0]?.at<now-1800000)samples.shift();const marketData=await getMarket();if(marketData?.status==='STALE'||marketData?.verified===false)throw Error('Kalshi market snapshot stale or unverified');const p=makeForecast(marketData?.market);if(p&&!predictions.has(p.id)){await event(p);predictions.set(p.id,p)}lastError=null;lastCycle=new Date().toISOString()}catch(e){lastError=e.message}finally{const now=Date.now();const unresolved=[...new Map([...predictions.values()].filter(x=>!resolved.has(x.id)&&Date.parse(x.closeTime)<now-90000).map(x=>[x.ticker,x])).values()].slice(0,3);for(const x of unresolved)await checkResolution(x);running=false}}
+// Illustrative Kalshi-style taker fee only: actual fee schedules, rounding and tiers may differ.
+function estimatedTakerFeePerShare(price){return Math.ceil(100*0.07*price*(1-price))/100}
 function executionAudit(finished){
  const observations=[];
  for(const p of finished){
@@ -53,7 +55,7 @@ function executionAudit(finished){
   const probability=side==='YES'?p.pYes:1-p.pYes;
   if(!Number.isFinite(ask)||ask<=0||ask>=1||!Number.isFinite(probability))continue;
   const won=(side==='YES'?y===1:y===0);
-  observations.push({ticker:p.ticker,phase:p.phase,at:p.at,side,ask,probability,won,unitGrossPnl:(won?1:0)-ask,estimatedGrossEdge:probability-ask});
+  observations.push({ticker:p.ticker,phase:p.phase,at:p.at,side,ask,probability,won,unitGrossPnl:(won?1:0)-ask,estimatedGrossEdge:probability-ask,estimatedFeePerShare:estimatedTakerFeePerShare(ask),unitEstimatedNetPnl:(won?1:0)-ask-estimatedTakerFeePerShare(ask),estimatedNetEdge:probability-ask-estimatedTakerFeePerShare(ask)});
  }
  const distinct=new Set(observations.map(x=>x.ticker)).size;
  const mean=observations.length?observations.reduce((a,x)=>a+x.unitGrossPnl,0)/observations.length:null;
@@ -61,8 +63,8 @@ function executionAudit(finished){
  for(const x of observations){const prev=firstByContract.get(x.ticker);if(!prev||Date.parse(x.at)<Date.parse(prev.at))firstByContract.set(x.ticker,x)}
  const independent=[...firstByContract.values()];
  const contractMean=independent.length?independent.reduce((a,x)=>a+x.unitGrossPnl,0)/independent.length:null;
- const winRate=independent.length?independent.filter(x=>x.won).length/independent.length:null;
- return {policy:'Choose higher model probability at observed ask; hypothetical one-share immediate fill',quoteObservations:observations.length,distinctContracts:distinct,firstQuotePerContractCount:independent.length,meanHypotheticalGrossPnlPerShare:mean,firstQuotePerContractMeanGrossPnlPerShare:contractMean,firstQuotePerContractWinRate:winRate,feeAdjustedPnl:null,realizedPnl:null,fillRate:null,spreadCostIncludedInAsk:true,limitations:'Unvalidated model-selection diagnostic, not a recommended or profitable strategy. Assumes instantaneous execution at historical asking quotes, with no fees, slippage, latency, quantity or missing quotes. Multiple snapshots per contract are correlated; first-quote summary reduces duplicate counting. Resting orders require independently verified order-book and fill simulation.'}
+ const winRate=independent.length?independent.filter(x=>x.won).length/independent.length:null;const estimatedNetMean=independent.length?independent.reduce((a,x)=>a+x.unitEstimatedNetPnl,0)/independent.length:null;
+ return {policy:'Choose higher model probability at observed ask; hypothetical one-share immediate fill',quoteObservations:observations.length,distinctContracts:distinct,firstQuotePerContractCount:independent.length,meanHypotheticalGrossPnlPerShare:mean,firstQuotePerContractMeanGrossPnlPerShare:contractMean,firstQuotePerContractWinRate:winRate,illustrativeTakerFeeFormula:'ceil(100 * 0.07 * ask * (1-ask))/100 per share; not verified against current venue fee table',firstQuotePerContractEstimatedNetPnlPerShare:estimatedNetMean,feeAdjustedPnl:null,realizedPnl:null,fillRate:null,spreadCostIncludedInAsk:true,limitations:'Unvalidated model-selection diagnostic, not a recommended or profitable strategy. Assumes instantaneous execution at historical asking quotes, with illustrative taker fees only, and no verified current fee schedule, slippage, latency, quantity or missing quotes. Multiple snapshots per contract are correlated; first-quote summary reduces duplicate counting. Resting orders require independently verified order-book and fill simulation.'}
 }
 export async function forecastStorageProbe(){
  const directory=dirname(path),probePath=directory+'/.karen-storage-probe-'+process.pid,markerPath=directory+'/.karen-retention-marker';
