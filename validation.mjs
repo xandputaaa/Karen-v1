@@ -25,8 +25,25 @@ export async function loadForecastHistory(){
 }
 
 function makeForecast(m){if(!m?.targetVerified||!Number.isFinite(m.target)||!Number.isFinite(Date.parse(m.closeTime)))return null;const now=Date.now(),remaining=(Date.parse(m.closeTime)-now)/1000;if(remaining<=0||remaining>900)return null;const points=samples.filter(x=>now-x.at<=900000);if(points.length<7)return null;const returns=[];for(let i=1;i<points.length;i++){const dt=(points[i].at-points[i-1].at)/1000;if(dt>=5&&dt<=90)returns.push({dt,r:Math.log(points[i].price/points[i-1].price)})}if(returns.length<6)return null;const time=returns.reduce((a,x)=>a+x.dt,0),sum=returns.reduce((a,x)=>a+x.r,0);const drift=clamp(sum/time,-.00002,.00002)*.15;const sigma=Math.max(.00002,Math.sqrt(returns.reduce((a,x)=>a+(x.r-drift*x.dt)**2,0)/time));const spot=points.at(-1).price;const z=(Math.log(m.target/spot)-drift*remaining)/(sigma*Math.sqrt(remaining));const pYes=clamp(1-cdf(z),.001,.999);return {type:'forecast',id:m.ticker+':'+Math.floor(now/30000),ticker:m.ticker,at:new Date(now).toISOString(),closeTime:m.closeTime,spot,reference:'Coinbase BTC/USD spot (not settlement index)',target:m.target,pYes,projected:spot*Math.exp(drift*remaining),sigma,remainingSeconds:Math.round(remaining),phase:remaining>450?'FIRST_HALF':'SECOND_HALF',sampleCount:points.length,yesAsk:m.yesAsk,noAsk:m.noAsk,model:'v0-drift-shrunk-lognormal',validated:false}}
-async function checkResolution(p){if(resolved.has(p.id)||Date.now()<Date.parse(p.closeTime)+90000)return;if(Date.now()-(resolutionAttempts.get(p.ticker)||0)<60000)return;resolutionAttempts.set(p.ticker,Date.now());try{const r=await fetch(base+'/markets/'+encodeURIComponent(p.ticker),{signal:AbortSignal.timeout(6500)});if(!r.ok)return;const data=await r.json(),m=data.market;if(!m||!['yes','no'].includes(String(m.result).toLowerCase()))return;const y=String(m.result).toLowerCase()==='yes'?1:0;const x={type:'resolution',id:p.id,ticker:p.ticker,at:new Date().toISOString(),outcome:y,source:'Kalshi resolved market result',brier:(p.pYes-y)**2,correct:(p.pYes>=.5)===(y===1)};await event(x);resolved.set(p.id,x)}catch(e){lastError='Settlement lookup: '+e.message}}
-export async function validationCycle(getMarket){if(!historyLoaded||running)return;running=true;try{const r=await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot',{signal:AbortSignal.timeout(5500)});if(!r.ok)throw Error('Coinbase '+r.status);const data=await r.json(),price=Number(data?.data?.amount);if(!Number.isFinite(price)||price<=0)throw Error('Invalid spot');const now=Date.now();samples.push({at:now,price});while(samples.length>1000||samples[0]?.at<now-1800000)samples.shift();const marketData=await getMarket();if(marketData?.status==='STALE'||marketData?.verified===false)throw Error('Kalshi market snapshot stale or unverified');const p=makeForecast(marketData?.market);if(p&&!predictions.has(p.id)){await event(p);predictions.set(p.id,p)}lastError=null;lastCycle=new Date().toISOString()}catch(e){lastError=e.message}finally{const now=Date.now();const unresolved=[...predictions.values()].filter(x=>!resolved.has(x.id)&&Date.parse(x.closeTime)<now-90000).slice(0,3);for(const x of unresolved)await checkResolution(x);running=false}}
+async function checkResolution(p){
+ if(resolved.has(p.id)||Date.now()<Date.parse(p.closeTime)+90000)return;
+ if(Date.now()-(resolutionAttempts.get(p.ticker)||0)<60000)return;
+ resolutionAttempts.set(p.ticker,Date.now());
+ try{
+  const r=await fetch(base+'/markets/'+encodeURIComponent(p.ticker),{signal:AbortSignal.timeout(6500)});
+  if(!r.ok){lastError='Settlement lookup HTTP '+r.status;return}
+  const data=await r.json(),m=data.market;
+  if(!m||!['yes','no'].includes(String(m.result).toLowerCase()))return;
+  const y=String(m.result).toLowerCase()==='yes'?1:0;
+  const cohort=[...predictions.values()].filter(x=>x.ticker===p.ticker&&!resolved.has(x.id)&&Date.parse(x.closeTime)<=Date.now()-90000);
+  for(const x of cohort){
+   const row={type:'resolution',id:x.id,ticker:x.ticker,at:new Date().toISOString(),outcome:y,source:'Kalshi resolved market result',brier:(x.pYes-y)**2,correct:(x.pYes>=.5)===(y===1)};
+   await event(row);
+   resolved.set(x.id,row);
+  }
+ }catch(e){lastError='Settlement lookup: '+e.message}
+}
+export async function validationCycle(getMarket){if(!historyLoaded||running)return;running=true;try{const r=await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot',{signal:AbortSignal.timeout(5500)});if(!r.ok)throw Error('Coinbase '+r.status);const data=await r.json(),price=Number(data?.data?.amount);if(!Number.isFinite(price)||price<=0)throw Error('Invalid spot');const now=Date.now();samples.push({at:now,price});while(samples.length>1000||samples[0]?.at<now-1800000)samples.shift();const marketData=await getMarket();if(marketData?.status==='STALE'||marketData?.verified===false)throw Error('Kalshi market snapshot stale or unverified');const p=makeForecast(marketData?.market);if(p&&!predictions.has(p.id)){await event(p);predictions.set(p.id,p)}lastError=null;lastCycle=new Date().toISOString()}catch(e){lastError=e.message}finally{const now=Date.now();const unresolved=[...new Map([...predictions.values()].filter(x=>!resolved.has(x.id)&&Date.parse(x.closeTime)<now-90000).map(x=>[x.ticker,x])).values()].slice(0,3);for(const x of unresolved)await checkResolution(x);running=false}}
 function executionAudit(finished){
  const observations=[];
  for(const p of finished){
