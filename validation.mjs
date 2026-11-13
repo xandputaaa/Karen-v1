@@ -3,7 +3,7 @@ import {dirname} from 'node:path';
 const path=process.env.KAREN_FORECAST_LOG_PATH||'/tmp/karen-forecast-events.jsonl';
 const base='https://external-api.kalshi.com/trade-api/v2';
 // Increment this immutable identifier whenever forecast math, features or selection policy changes.
-const MODEL_VERSION='btc15-v0-drift-shrunk-lognormal-20261113';
+const MODEL_VERSION='btc15-v0-drift-shrunk-lognormal-fresh15s-20261113';
 const samples=[],predictions=new Map(),resolved=new Map(),resolutionAttempts=new Map();
 let running=false,lastError=null,lastCycle=null,storageError=null,historyLoaded=false,malformedEvents=0;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
