@@ -20,3 +20,5 @@ test('BTC contract signal uses verified settlement target rather than current sp
 test('server records 5-second samples, caches Kalshi and settles independently',async()=>{const server=await read('server.mjs'),validation=await read('validation.mjs');assert.match(server,/setInterval\(\(\)=>validationCycle\(getKalshi15m\),5000\)/);assert.match(server,/kalshiBackoffUntil/);assert.match(server,/kalshiPending/);assert.match(validation,/resolutionAttempts/);assert.match(validation,/finally\{const now=Date\.now\(\)/)});
 
 test('execution audit does not claim live profitability or fills',async()=>{const src=await read('validation.mjs');assert.match(src,/executionAudit:executionAudit\(finished\)/);assert.match(src,/feeAdjustedPnl:null/);assert.match(src,/realizedPnl:null/);assert.match(src,/fillRate:null/)});
+
+test('execution audit chooses one side per forecast and reports first observation per contract',async()=>{const src=await read('validation.mjs');assert.match(src,/p\.pYes>=\.5\?'YES':'NO'/);assert.match(src,/firstByContract=new Map/);assert.match(src,/firstQuotePerContractMeanGrossPnlPerShare/);assert.match(src,/feeAdjustedPnl:null/)});
