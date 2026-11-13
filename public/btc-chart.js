@@ -2,7 +2,7 @@ const chartState={samples:[],price:null,status:'CONNECTING',interval:'LIVE'};
 const fmt=n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 function drawBtcChart(){
  const card=document.querySelector('.chartcard');if(!card)return;
- const data=chartState.samples.slice(-100),valid=data.length>=2;
+ const duration={LIVE:Infinity,'5M':300000,'15M':900000,'1H':3600000}[chartState.interval];const cutoff=Date.now()-duration;const data=chartState.samples.filter(p=>p.time>=cutoff).slice(-100),valid=data.length>=2;
  const values=data.map(x=>x.price),lo=valid?Math.min(...values):0,hi=valid?Math.max(...values):1;
  const padding=Math.max((hi-lo)*.2,1),min=lo-padding,max=hi+padding;
  const points=data.map((p,i)=>({x:12+i*670/Math.max(1,data.length-1),y:263-(p.price-min)/(max-min)*215}));
