@@ -26,3 +26,5 @@ test('execution audit chooses one side per forecast and reports first observatio
 test('sports feed cache flags stale fallback and deduplicates upstream requests',async()=>{const src=await read('server.mjs');assert.match(src,/sportsPending=new Map/);assert.match(src,/sportsRetryAt=new Map/);assert.match(src,/status:'STALE'/);assert.match(src,/fetchSportsGamesUncached/)});
 
 test('settlement resolves every saved forecast for a ticker without redundant requests',async()=>{const src=await read('validation.mjs');assert.match(src,/const cohort=\[\.\.\.predictions\.values\(\)\]/);assert.match(src,/x\.ticker===p\.ticker/);assert.match(src,/for\(const x of cohort\)/);assert.match(src,/new Map\(\[\.\.\.predictions\.values\(\)\]/)});
+
+test('validation report audits stored events and separates independent first and second half forecasts',async()=>{const src=await read('validation.mjs');assert.match(src,/phasePerformance:phasePerformance\(finished\)/);assert.match(src,/historyAudit:forecastHistoryAudit\(\)/);assert.match(src,/FIRST_HALF','SECOND_HALF/);assert.match(src,/firstForecastPerContractCount/);assert.match(src,/postCloseForecasts/)});
