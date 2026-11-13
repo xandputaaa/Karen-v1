@@ -6,3 +6,5 @@ test('demo and real feeds are distinguished',async()=>{const s=await read('publi
 test('no hidden owner controls',async()=>{for(const file of ['public/app.js','server.mjs']){const s=await read(file);assert.doesNotMatch(s,/owner.?dashboard|stealth.?monitor|covert.?access/i)}});
 test('spot API fails closed and labels source',async()=>{const s=await read('server.mjs');assert.match(s,/Coinbase spot/);assert.match(s,/503/);assert.match(s,/not Kalshi settlement/);assert.match(s,/cache-control/);});
 test('local forecast scoring uses later spot and no synthetic win rate',async()=>{const s=await read('public/app.js');assert.match(s,/settleForecasts/);assert.match(s,/Date\.now\(\)-p\.time<300000/);assert.match(s,/settled\.length/);});
+
+test('approved Demo 2 pages and actions are wired',async()=>{const s=await read('public/app.js');for(const name of ['Terminal','Strategy Lab','Signal Lab','Risk Desk','Data Health','Replay Studio','KAREN Chat'])assert.match(s,new RegExp(name));for(const action of ['replayNext','replayPrev','replayReset','chatForm','scriptedReply'])assert.ok(s.includes(action),action)});
