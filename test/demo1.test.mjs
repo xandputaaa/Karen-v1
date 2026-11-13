@@ -18,3 +18,5 @@ test('validation endpoint is read-only and background collector is scheduled',as
 test('BTC contract signal uses verified settlement target rather than current spot direction',async()=>{const code=await read('public/btc-chart.js');assert.match(code,/end>=target\?'UP':'DOWN'/);assert.match(code,/const evUp=null/);assert.match(code,/const evDown=null/);assert.match(code,/unvalidated/)});
 
 test('server records 5-second samples, caches Kalshi and settles independently',async()=>{const server=await read('server.mjs'),validation=await read('validation.mjs');assert.match(server,/setInterval\(\(\)=>validationCycle\(getKalshi15m\),5000\)/);assert.match(server,/kalshiBackoffUntil/);assert.match(server,/kalshiPending/);assert.match(validation,/resolutionAttempts/);assert.match(validation,/finally\{const now=Date\.now\(\)/)});
+
+test('execution audit does not claim live profitability or fills',async()=>{const src=await read('validation.mjs');assert.match(src,/executionAudit:executionAudit\(finished\)/);assert.match(src,/feeAdjustedPnl:null/);assert.match(src,/realizedPnl:null/);assert.match(src,/fillRate:null/)});
