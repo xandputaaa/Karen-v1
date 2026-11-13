@@ -22,3 +22,5 @@ test('server records 5-second samples, caches Kalshi and settles independently',
 test('execution audit does not claim live profitability or fills',async()=>{const src=await read('validation.mjs');assert.match(src,/executionAudit:executionAudit\(finished\)/);assert.match(src,/feeAdjustedPnl:null/);assert.match(src,/realizedPnl:null/);assert.match(src,/fillRate:null/)});
 
 test('execution audit chooses one side per forecast and reports first observation per contract',async()=>{const src=await read('validation.mjs');assert.match(src,/p\.pYes>=\.5\?'YES':'NO'/);assert.match(src,/firstByContract=new Map/);assert.match(src,/firstQuotePerContractMeanGrossPnlPerShare/);assert.match(src,/feeAdjustedPnl:null/)});
+
+test('sports feed cache flags stale fallback and deduplicates upstream requests',async()=>{const src=await read('server.mjs');assert.match(src,/sportsPending=new Map/);assert.match(src,/sportsRetryAt=new Map/);assert.match(src,/status:'STALE'/);assert.match(src,/fetchSportsGamesUncached/)});
