@@ -203,3 +203,4 @@ html,body{background:#08090a;color:var(--k-white)}
 .btc-quick-foot{font-size:10px;color:#aeb3ba;flex-wrap:wrap}.btc-quick-foot b{color:#f5f5f6;font-size:13px;font-variant-numeric:tabular-nums;margin-left:5px}
 .btc-quick p{font-size:10px;line-height:1.55;color:#9da3ac;margin:17px 0 0}
 @media(max-width:380px){.btc-quick{padding:13px}.btc-quick-grid{gap:8px}.btc-quick-grid>div+div{padding-left:9px}.btc-quick-grid strong{font-size:17px}}
+\n/* Keep the last BTC and contract-status cards scrollable above the floating mobile dock. */\n@media(max-width:759px){.shell{padding-bottom:calc(180px + env(safe-area-inset-bottom,0px))}.main{scroll-margin-bottom:160px}.bottomnav{bottom:calc(12px + env(safe-area-inset-bottom,0px))}}\n
