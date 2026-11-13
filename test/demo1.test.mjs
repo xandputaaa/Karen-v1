@@ -16,3 +16,5 @@ test('prospective Kalshi validation is based on official outcomes, not synthetic
 test('validation endpoint is read-only and background collector is scheduled',async()=>{const s=await read('server.mjs');assert.match(s,/\/api\/btc\/validation/);assert.match(s,/validationCycle\(getKalshi15m\)/);assert.doesNotMatch(s,/\/portfolio\/orders/)});
 
 test('BTC contract signal uses verified settlement target rather than current spot direction',async()=>{const code=await read('public/btc-chart.js');assert.match(code,/end>=target\?'UP':'DOWN'/);assert.match(code,/const evUp=null/);assert.match(code,/const evDown=null/);assert.match(code,/unvalidated/)});
+
+test('server records 5-second samples, caches Kalshi and settles independently',async()=>{const server=await read('server.mjs'),validation=await read('validation.mjs');assert.match(server,/setInterval\(\(\)=>validationCycle\(getKalshi15m\),5000\)/);assert.match(server,/kalshiBackoffUntil/);assert.match(server,/kalshiPending/);assert.match(validation,/resolutionAttempts/);assert.match(validation,/finally\{const now=Date\.now\(\)/)});
