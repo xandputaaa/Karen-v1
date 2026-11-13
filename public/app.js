@@ -5,7 +5,7 @@ const STATES=['IDLE','LISTENING','ANALYZING','PREDICTING','ALERT'];
 const $=x=>document.querySelector(x);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const line=(data='4,66 17,58 29,61 41,46 52,54 65,33 77,39 89,20 101,29 113,11 127,16 140,4')=>'<svg class="spark" viewBox="0 0 144 72" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+data+'"/></svg>';
-const bars=(names)=>names.map((n,i)=>'<div class="meter"><span>'+n+'</span><div class="track"><div style="width:'+([81,70,63,76,54][i%5])+'%"></div></div></div>').join('');
+const bars=names=>names.map(n=>'<div class="meter"><span>'+esc(n)+'</span><span class="metric-unavailable">NOT MEASURED</span></div>').join('');
 const tabs=(items,key)=>'<div class="tabs">'+items.map(v=>'<button data-set="'+key+'" data-value="'+v+'" class="'+(S[key]===v?'selected':'')+'">'+v+'</button>').join('')+'</div>';
 const card=(title,body,cl='')=>'<section class="glass card '+cl+'"><div class="cardtitle">'+title+'</div>'+body+'</section>';
 const row=(l,r,cl='')=>'<div class="datarow '+cl+'"><span>'+l+'</span><span>'+r+'</span></div>';
