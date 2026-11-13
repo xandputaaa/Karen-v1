@@ -39,7 +39,7 @@ function drawBtcChart(){
  const phase=midpoint===null?'UNKNOWN':now<midpoint?'FIRST HALF':'SECOND HALF';
  const untilMidpoint=midpoint===null?null:Math.max(0,(midpoint-now)/1000);
  const midpointEstimate=estimate&&untilMidpoint>0?estimate.projected(untilMidpoint):null;
- const observedMidpoint=midpoint!==null&&now>=midpoint?chartState.samples.filter(p=>p.time<=midpoint).at(-1):null;
+ const observedMidpoint=midpoint!==null&&now>=midpoint?chartState.samples.filter(p=>p.time>=contractStart&&p.time<=midpoint).at(-1):null;
  const halfwayPrice=midpointEstimate??observedMidpoint?.price??null;
  const phaseTime=contractStart===null?'—':Math.max(0,Math.min(900,Math.floor((now-contractStart)/1000)));
  const phaseClock=Math.floor(phaseTime/60)+':'+String(phaseTime%60).padStart(2,'0');
