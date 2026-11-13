@@ -178,3 +178,8 @@ html,body{background:#08090a;color:var(--k-white)}
 .position-form input::placeholder{color:#7f818b}
 .position-form button[type=submit]{grid-column:1/-1;margin:4px 0 0;min-height:46px}
 @media(max-width:430px){.position-form{grid-template-columns:minmax(0,1fr);gap:12px}.position-form label:first-child,.position-form button[type=submit]{grid-column:1}.position-form input,.position-form select{width:100%}}
+
+
+/* Keep status notices out of the position form and above the bottom navigation */
+.toast{position:fixed!important;top:auto!important;bottom:calc(112px + env(safe-area-inset-bottom,0px))!important;left:50%!important;transform:translateX(-50%)!important;width:min(calc(100% - 36px),540px)!important;max-height:100px;overflow:auto;z-index:1000;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 8px 28px #0009}
+.toast button[data-action="dismissNotice"]{flex:0 0 auto;border:1px solid #ffffff45;background:#ffffff12;color:inherit;border-radius:50%;width:30px;height:30px;font-size:20px;line-height:1}
