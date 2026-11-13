@@ -162,3 +162,9 @@ html,body{background:#08090a;color:var(--k-white)}
 .kalshi-graph svg{width:100%;height:100%;min-height:210px}
 .kalshi-countdown{font-variant-numeric:tabular-nums}
 @media(max-width:380px){.projection-metrics{grid-template-columns:1fr}}
+
+
+.karen-phases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0 20px}
+.karen-phases>div{display:flex;flex-direction:column;gap:7px;padding:12px;border:1px solid #ffffff25;border-radius:13px;background:#ffffff06;min-width:0}
+.karen-phases small{font-size:10px;color:#9da3ac;letter-spacing:.025em}
+.karen-phases b{font-size:13px;font-variant-numeric:tabular-nums;color:#f4f5f6;overflow-wrap:anywhere}
