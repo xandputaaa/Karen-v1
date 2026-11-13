@@ -24,3 +24,5 @@ test('execution audit does not claim live profitability or fills',async()=>{cons
 test('execution audit chooses one side per forecast and reports first observation per contract',async()=>{const src=await read('validation.mjs');assert.match(src,/p\.pYes>=\.5\?'YES':'NO'/);assert.match(src,/firstByContract=new Map/);assert.match(src,/firstQuotePerContractMeanGrossPnlPerShare/);assert.match(src,/feeAdjustedPnl:null/)});
 
 test('sports feed cache flags stale fallback and deduplicates upstream requests',async()=>{const src=await read('server.mjs');assert.match(src,/sportsPending=new Map/);assert.match(src,/sportsRetryAt=new Map/);assert.match(src,/status:'STALE'/);assert.match(src,/fetchSportsGamesUncached/)});
+
+test('settlement resolves every saved forecast for a ticker without redundant requests',async()=>{const src=await read('validation.mjs');assert.match(src,/const cohort=\[\.\.\.predictions\.values\(\)\]/);assert.match(src,/x\.ticker===p\.ticker/);assert.match(src,/for\(const x of cohort\)/);assert.match(src,/new Map\(\[\.\.\.predictions\.values\(\)\]/)});
