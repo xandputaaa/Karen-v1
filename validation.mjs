@@ -54,7 +54,7 @@ export async function forecastStorageProbe(){
  try{
   await mkdir(directory,{recursive:true});
   try{
-   const previous=JSON.parse((await readFile(markerPath,'utf8')).trim().replace(/\\\\n$/, ''));
+   const previous=JSON.parse((await readFile(markerPath,'utf8')).trim().replace(/\\n$/, ''));
    markerWasPresent=previous.type==='karen-storage-retention-marker';
    markerCreatedAt=previous.createdAt||null;
   }catch(e){if(e.code!=='ENOENT')throw e}
