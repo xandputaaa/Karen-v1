@@ -31,9 +31,9 @@ function drawBtcChart(){
  const card=document.querySelector('.chartcard');if(!card)return;
  const now=Date.now(),duration={LIVE:900000,'5M':300000,'15M':900000,'1H':3600000}[chartState.interval]||900000;
  const data=chartState.samples.filter(p=>p.time>=now-duration).slice(-240);
- const market=chartState.venue==='Kalshi'?chartState.market:null;
+ const market=!chartState.demo&&chartState.venue==='Kalshi'?chartState.market:null;
  const close=market?.closeTime?Date.parse(market.closeTime):NaN;
- const seconds=chartState.demo?Math.max(60,900-(chartState.demoTick*12)%900):Number.isFinite(close)?Math.max(0,(close-now)/1000):null;
+ const seconds=chartState.demo?Math.max(0,900-(chartState.demoTick*15)%900):Number.isFinite(close)?Math.min(900,Math.max(0,(close-now)/1000)):null;
  const estimate=estimateFuture(data,seconds,market);
  const contractStart=Number.isFinite(close)?close-900000:null;
  const midpoint=contractStart===null?null:contractStart+450000;
@@ -46,7 +46,7 @@ function drawBtcChart(){
  const phaseClock=Math.floor(phaseTime/60)+':'+String(phaseTime%60).padStart(2,'0');
 
  window.dispatchEvent(new CustomEvent('karen:btc-forecast',{detail:{ticker:market?.ticker||null,closeTime:market?.closeTime||null,target:market?.targetVerified?Number(market.target):null,spot:chartState.price,projected:estimate?.end??null,pUp:estimate?.pUp??null,phase,at:now,experimental:true}}));
- const valid=data.length>=2,remaining=seconds===null?'NO ACTIVE CONTRACT':Math.ceil(seconds/60)+'m '+Math.floor(seconds%60)+'s LEFT';
+ const valid=data.length>=2,remaining=chartState.demo?'DEMO · '+Math.floor(seconds/60)+'m '+String(Math.floor(seconds%60)).padStart(2,'0')+'s':seconds===null?'NO ACTIVE CONTRACT':Math.floor(seconds/60)+'m '+String(Math.floor(seconds%60)).padStart(2,'0')+'s LEFT';
  const low=valid?Math.min(...data.map(x=>x.price)):0,high=valid?Math.max(...data.map(x=>x.price)):1;
  const [bandLo,bandHi]=estimate?estimate.band(seconds):[low,high];
  const min=Math.min(low,bandLo,...(Number.isFinite(verifiedTargetForScale(market))?[verifiedTargetForScale(market)]:[]))-Math.max((high-low)*.15,2);
@@ -63,10 +63,10 @@ function drawBtcChart(){
  const pct=n=>n===null||n===undefined?'—':(n*100).toFixed(1)+'% (unvalidated)';
  const edge=n=>n===null||n===undefined?'Not validated':(n*100).toFixed(1)+'¢ / share before fees';
  card.classList.add('kalshi-card');
- card.innerHTML='<div class="kalshi-head"><div class="karen-demo-switch"><span>DATA SOURCE</span><button data-demo="off" class="'+(!chartState.demo?'active':'')+'">LIVE SPOT</button><button data-demo="on" class="'+(chartState.demo?'active':'')+'">SIMULATED DEMO</button></div><div class="kalshi-venues"><button data-venue="Kalshi" class="'+(chartState.venue==='Kalshi'?'active':'')+'">Kalshi 15m</button><button data-venue="Polymarket" class="'+(chartState.venue==='Polymarket'?'active':'')+'">Polymarket 5m</button></div><div class="kalshi-heading"><span class="kalshi-btc-icon">₿</span><strong>BTC · FUTURE PATH</strong><span class="kalshi-countdown">'+remaining+'</span></div><div class="kalshi-prices"><div><small>Verified Kalshi target</small><strong>'+(verified?fmt(Number(market.target)):'UNAVAILABLE')+'</strong></div><div><small>Now · Coinbase spot</small><strong>'+fmt(chartState.price)+'</strong></div></div></div>'+
+ card.innerHTML='<div class="kalshi-head"><div class="karen-demo-switch"><span>DATA SOURCE</span><button data-demo="off" class="'+(!chartState.demo?'active':'')+'">LIVE SPOT</button><button data-demo="on" class="'+(chartState.demo?'active':'')+'">SIMULATED DEMO</button></div><div class="kalshi-venues"><button data-venue="Kalshi" class="'+(chartState.venue==='Kalshi'?'active':'')+'">Kalshi 15m</button><button data-venue="Polymarket" class="'+(chartState.venue==='Polymarket'?'active':'')+'">Polymarket 5m</button></div><div class="kalshi-heading"><span class="kalshi-btc-icon">₿</span><strong>BTC · FUTURE PATH</strong><span class="kalshi-countdown">'+remaining+'</span></div><div class="kalshi-prices"><div><small>'+(chartState.demo?'Demo target · not supplied':'Verified Kalshi target')+'</small><strong>'+(verified?fmt(Number(market.target)):'UNAVAILABLE')+'</strong></div><div><small>'+(chartState.demo?'Now · simulated BTC':'Now · Coinbase spot')+'</small><strong>'+fmt(chartState.price)+'</strong></div></div></div>'+
  '<div class="karen-signal '+(estimate?estimate.signal.toLowerCase():'wait')+'">KAREN · '+(estimate&&estimate.signal!=='WAIT'?'EXPERIMENTAL '+estimate.signal:'WAIT')+' <small>'+(estimate?(estimate.provisional?'EARLY ESTIMATE · LOW DATA':'Forward scenario · not calibrated'):'Collecting 4+ timed samples and verifying contract')+'</small></div>'+
- '<div class="kalshi-graph"><svg viewBox="0 0 790 300" preserveAspectRatio="none" role="img" aria-label="Actual BTC history and forward experimental forecast">'+
- [48,156,264].map((v,i)=>'<line x1="0" x2="770" y1="'+v+'" y2="'+v+'" stroke="#ffffff18"/><text x="700" y="'+(v-8)+'" fill="#a6abb1" font-size="12">'+fmt(max-(v-40)/230*(max-min))+'</text>').join('')+
+ '<div class="kalshi-graph"><svg viewBox="0 0 790 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Actual BTC history and forward experimental forecast">'+
+ [48,156,264].map((v,i)=>'<line x1="0" x2="770" y1="'+v+'" y2="'+v+'" stroke="#ffffff18"/><text x="690" y="'+(v-8)+'" fill="#a6abb1" font-size="14">'+fmt(max-(v-40)/230*(max-min))+'</text>').join('')+
  (midpointX!==null?'<line x1="'+midpointX+'" x2="'+midpointX+'" y1="18" y2="280" stroke="#ffffff4d" stroke-dasharray="3 7"/><text x="'+Math.min(midpointX+5,710)+'" y="36" fill="#aeb2b8" font-size="11">7:30 MID</text>':'')+
  '<line x1="474" y1="12" x2="474" y2="280" stroke="#ffffff55" stroke-dasharray="4 5"/><text x="480" y="18" fill="#fff" font-size="13">NOW → FUTURE</text>'+
  (valid?'<path d="'+history+'" fill="none" stroke="#f6f7f8" stroke-width="3" stroke-linejoin="round"/>':'')+
