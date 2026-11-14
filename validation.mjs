@@ -50,7 +50,7 @@ export async function validationCycle(getMarket){if(!historyLoaded||running)retu
 // Illustrative Kalshi-style taker fee only: actual fee schedules, rounding and tiers may differ.
 export function estimatedTakerFeePerShare(price){if(!Number.isFinite(price)||price<=0||price>=1)return null;return Math.ceil((0.07*price*(1-price)-1e-12)*10000)/10000}
 function selectiveNetEdgeAudit(finished){
- // Lock the earliest eligible pre-close snapshot for each contract BEFORE choosing a side.
+ // Lock the earliest settled, pre-close forecast per contract BEFORE choosing a side.
  // Never search later quotes for a better historical entry.
  const first=new Map();
  for(const p of finished){
@@ -79,7 +79,7 @@ function selectiveNetEdgeAudit(finished){
  const n=selections.length,mean=n?selections.reduce((s,x)=>s+x.estimatedNetPnl,0)/n:null;
  const variance=n>1?selections.reduce((s,x)=>s+(x.estimatedNetPnl-mean)**2,0)/(n-1):null;
  const se=n>1?Math.sqrt(variance/n):null;
- return {policy:'Earliest eligible snapshot per settled contract; choose side with higher positive model-implied net edge, otherwise abstain',contractsWithFirstSnapshot:first.size,eligibleWithBothAsks:eligible,skippedMissingQuotes,abstained,selectedContracts:n,selectionRate:eligible? n/eligible:null,chronologicalEvaluation,estimatedMeanNetPnlPerSelectedShare:mean,approximate95Interval:n>1?{lower:mean-1.96*se,upper:mean+1.96*se}:null,modelFrozenProspectively:false,feeScheduleVerified:false,fillabilityVerified:false,demonstratedTradableEdge:false,warning:'Selection uses unvalidated forecast probabilities and illustrative general taker fees; historical quote timestamps are not independently verified for execution. Never treat as live betting advice.'};
+ return {policy:'Earliest timestamped settled forecast per contract; require both recorded asks at that snapshot, choose side with higher positive model-implied net edge, otherwise abstain; never search later snapshots for a better entry',contractsWithFirstSnapshot:first.size,eligibleWithBothAsks:eligible,skippedMissingQuotes,abstained,selectedContracts:n,selectionRate:eligible? n/eligible:null,chronologicalEvaluation,estimatedMeanNetPnlPerSelectedShare:mean,approximate95Interval:n>1?{lower:mean-1.96*se,upper:mean+1.96*se}:null,modelFrozenProspectively:false,feeScheduleVerified:false,fillabilityVerified:false,demonstratedTradableEdge:false,warning:'Selection uses unvalidated forecast probabilities and illustrative general taker fees; historical quote timestamps are not independently verified for execution. Never treat as live betting advice.'};
 }
 function executionAudit(finished){
  const observations=[];
