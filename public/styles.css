@@ -206,3 +206,12 @@ html,body{background:#08090a;color:var(--k-white)}
  
 /* Keep the last BTC and contract-status cards scrollable above the floating mobile dock. */
 @media(max-width:759px){.shell{padding-bottom:calc(180px + env(safe-area-inset-bottom,0px))}.main{scroll-margin-bottom:160px}.bottomnav{bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
+
+/* iPhone Future Path readability: keep graph proportions and bottom content accessible. */
+.kalshi-graph{height:clamp(230px,58vw,340px);min-height:230px;overflow:hidden;position:relative}
+.kalshi-graph svg{display:block;width:100%;height:100%;min-height:0;overflow:visible}
+.kalshi-heading{min-width:0;flex-wrap:wrap;gap:12px}
+.kalshi-heading strong{min-width:0;overflow-wrap:anywhere}
+.kalshi-countdown{white-space:normal;line-height:1.35}
+.kalshi-prices>div{min-width:0}.kalshi-prices strong{overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+@media(max-width:759px){.shell{padding-bottom:calc(220px + env(safe-area-inset-bottom,0px))}.main{padding-bottom:45px}.chartcard{min-width:0;overflow:hidden}.kalshi-graph{height:260px;min-height:260px}.kalshi-heading strong{font-size:clamp(19px,5.2vw,28px)}.kalshi-countdown{font-size:12px;max-width:155px}.bottomnav{z-index:50}}
