@@ -26,7 +26,15 @@ function estimateFuture(data,seconds,market){
 }
 async function warmBtcHistory(){if(chartState.demo)return;try{const r=await fetch('/api/btc/history',{cache:'no-store'});if(!r.ok)throw Error('history');const d=await r.json();if(!d.ok||!Array.isArray(d.samples))throw Error('samples');const combined=[...d.samples,...chartState.samples].filter(p=>Number.isFinite(p.time)&&Number.isFinite(p.price)&&p.price>0).sort((a,b)=>a.time-b.time);const dedup=[];for(const p of combined){if(dedup.length&&dedup.at(-1).time===p.time)dedup[dedup.length-1]=p;else dedup.push(p)}chartState.samples=dedup.slice(-480);chartState.historySource=d.source;drawBtcChart()}catch{chartState.historySource='Historical candles unavailable; collecting live samples';drawBtcChart()}}
 function verifiedTargetForScale(m){return m?.targetVerified&&Number.isFinite(Number(m.target))?Number(m.target):NaN}
-function broadcastFuturePath(){const m=chartState.market,now=Date.now(),close=m?.closeTime?Date.parse(m.closeTime):NaN,remaining=Number.isFinite(close)?Math.max(0,(close-now)/1000):null;const data=chartState.samples.filter(p=>p.time>=now-900000);const forecast=estimateFuture(data,remaining,m);window.dispatchEvent(new CustomEvent('karen:btc-forecast',{detail:{ticker:m?.ticker||null,closeTime:m?.closeTime||null,target:m?.targetVerified?Number(m.target):null,spot:chartState.price,projected:forecast?.end??null,pUp:forecast?.pUp??null,phase:Number.isFinite(close)?now<close-450000?'FIRST HALF':'SECOND HALF':'UNKNOWN',at:now,experimental:true}}))}
+function broadcastFuturePath(){
+ // Never publish simulated or alternate-venue prices under a live Kalshi contract identity.
+ if(chartState.demo||chartState.venue!=='Kalshi')return;
+ const m=chartState.market,now=Date.now(),close=m?.closeTime?Date.parse(m.closeTime):NaN;
+ const remaining=Number.isFinite(close)?Math.max(0,Math.min(900,(close-now)/1000)):null;
+ const data=chartState.samples.filter(p=>p.time>=now-900000);
+ const forecast=estimateFuture(data,remaining,m);
+ window.dispatchEvent(new CustomEvent('karen:btc-forecast',{detail:{ticker:m?.ticker||null,closeTime:m?.closeTime||null,target:m?.targetVerified?Number(m.target):null,spot:chartState.price,projected:forecast?.end??null,pUp:forecast?.pUp??null,phase:Number.isFinite(close)?now<close-450000?'FIRST HALF':'SECOND HALF':'UNKNOWN',at:now,experimental:true,demo:false}}));
+}
 function drawBtcChart(){
  const card=document.querySelector('.chartcard');if(!card)return;
  const now=Date.now(),duration={LIVE:900000,'5M':300000,'15M':900000,'1H':3600000}[chartState.interval]||900000;
@@ -45,7 +53,7 @@ function drawBtcChart(){
  const phaseTime=contractStart===null?'—':Math.max(0,Math.min(900,Math.floor((now-contractStart)/1000)));
  const phaseClock=Math.floor(phaseTime/60)+':'+String(phaseTime%60).padStart(2,'0');
 
- window.dispatchEvent(new CustomEvent('karen:btc-forecast',{detail:{ticker:market?.ticker||null,closeTime:market?.closeTime||null,target:market?.targetVerified?Number(market.target):null,spot:chartState.price,projected:estimate?.end??null,pUp:estimate?.pUp??null,phase,at:now,experimental:true}}));
+ if(!chartState.demo&&chartState.venue==='Kalshi')window.dispatchEvent(new CustomEvent('karen:btc-forecast',{detail:{ticker:market?.ticker||null,closeTime:market?.closeTime||null,target:market?.targetVerified?Number(market.target):null,spot:chartState.price,projected:estimate?.end??null,pUp:estimate?.pUp??null,phase,at:now,experimental:true,demo:false}}));
  const valid=data.length>=2,remaining=chartState.demo?'DEMO · '+Math.floor(seconds/60)+'m '+String(Math.floor(seconds%60)).padStart(2,'0')+'s':seconds===null?'NO ACTIVE CONTRACT':Math.floor(seconds/60)+'m '+String(Math.floor(seconds%60)).padStart(2,'0')+'s LEFT';
  const low=valid?Math.min(...data.map(x=>x.price)):0,high=valid?Math.max(...data.map(x=>x.price)):1;
  const [bandLo,bandHi]=estimate?estimate.band(seconds):[low,high];
