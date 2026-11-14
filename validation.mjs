@@ -71,10 +71,15 @@ function selectiveNetEdgeAudit(finished){
   const ask=side==='YES'?yes:no,fee=estimatedTakerFeePerShare(ask),outcome=resolved.get(p.id).outcome;
   selections.push({ticker:p.ticker,modelVersion:p.modelVersion||'LEGACY_UNVERSIONED',at:p.at,side,estimatedNetEdge:edge,estimatedNetPnl:(Number(side==='YES'?outcome===1:outcome===0))-ask-fee});
  }
+ // Fixed chronological evaluation: later 30% is descriptive only until model is frozen.
+ const ordered=selections.slice().sort((a,b)=>Date.parse(a.at)-Date.parse(b.at)||a.ticker.localeCompare(b.ticker));
+ const boundary=Math.floor(ordered.length*.7);
+ const describe=rows=>{const n=rows.length,mean=n?rows.reduce((sum,x)=>sum+x.estimatedNetPnl,0)/n:null;const variance=n>1?rows.reduce((sum,x)=>sum+(x.estimatedNetPnl-mean)**2,0)/(n-1):null;const se=n>1?Math.sqrt(variance/n):null;return {contracts:n,meanNetPnlPerShare:mean,approximate95Interval:n>1?{lower:mean-1.96*se,upper:mean+1.96*se}:null};};
+ const chronologicalEvaluation={method:'70/30 split of selected contract entries by first quote timestamp, descriptive only',earlier:describe(ordered.slice(0,boundary)),later:describe(ordered.slice(boundary)),prospectiveFrozenHoldout:false};
  const n=selections.length,mean=n?selections.reduce((s,x)=>s+x.estimatedNetPnl,0)/n:null;
  const variance=n>1?selections.reduce((s,x)=>s+(x.estimatedNetPnl-mean)**2,0)/(n-1):null;
  const se=n>1?Math.sqrt(variance/n):null;
- return {policy:'Earliest eligible snapshot per settled contract; choose side with higher positive model-implied net edge, otherwise abstain',contractsWithFirstSnapshot:first.size,eligibleWithBothAsks:eligible,skippedMissingQuotes,abstained,selectedContracts:n,selectionRate:eligible? n/eligible:null,estimatedMeanNetPnlPerSelectedShare:mean,approximate95Interval:n>1?{lower:mean-1.96*se,upper:mean+1.96*se}:null,modelFrozenProspectively:false,feeScheduleVerified:false,fillabilityVerified:false,demonstratedTradableEdge:false,warning:'Selection uses unvalidated forecast probabilities and illustrative general taker fees; historical quote timestamps are not independently verified for execution. Never treat as live betting advice.'};
+ return {policy:'Earliest eligible snapshot per settled contract; choose side with higher positive model-implied net edge, otherwise abstain',contractsWithFirstSnapshot:first.size,eligibleWithBothAsks:eligible,skippedMissingQuotes,abstained,selectedContracts:n,selectionRate:eligible? n/eligible:null,chronologicalEvaluation,estimatedMeanNetPnlPerSelectedShare:mean,approximate95Interval:n>1?{lower:mean-1.96*se,upper:mean+1.96*se}:null,modelFrozenProspectively:false,feeScheduleVerified:false,fillabilityVerified:false,demonstratedTradableEdge:false,warning:'Selection uses unvalidated forecast probabilities and illustrative general taker fees; historical quote timestamps are not independently verified for execution. Never treat as live betting advice.'};
 }
 function executionAudit(finished){
  const observations=[];
