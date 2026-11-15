@@ -8,9 +8,9 @@ export function replayPaperEvents(events,{modelVersion=null,bankrollUsd=25,maxTi
   if(e?.type==='forecast'&&typeof e.ticker==='string'&&Number.isFinite(Date.parse(e.at))&&Number.isFinite(Date.parse(e.closeTime))&&Date.parse(e.at)<Date.parse(e.closeTime)&&(!modelVersion||e.modelVersion===modelVersion)){
    const prior=first.get(e.ticker);if(!prior||Date.parse(e.at)<Date.parse(prior.at))first.set(e.ticker,e);
   }
-  if(e?.type==='resolution'&&typeof e.ticker==='string'&&[0,1].includes(e.outcome)&&e.source==='Kalshi resolved market result'){
-   const prior=resolved.get(e.ticker);if(prior&&prior.outcome!==e.outcome)conflicted.add(e.ticker);
-   else resolved.set(e.ticker,e);
+  if(e?.type==='resolution'&&typeof e.id==='string'&&e.id.length>0&&typeof e.ticker==='string'&&[0,1].includes(e.outcome)&&e.source==='Kalshi resolved market result'){
+   const prior=resolved.get(e.id);if(prior&&(prior.outcome!==e.outcome||prior.ticker!==e.ticker))conflicted.add(e.id);
+   else resolved.set(e.id,e);
   }
  }
  const ledger=[];
@@ -18,8 +18,8 @@ export function replayPaperEvents(events,{modelVersion=null,bankrollUsd=25,maxTi
   const ticket=paperTicket({forecast:p,market:{ticker:p.ticker,targetVerified:Number.isFinite(p.target)&&p.target>0,closeTime:p.closeTime,yesAsk:p.yesAsk,noAsk:p.noAsk,receivedAt:p.at},now:Date.parse(p.at),bankrollUsd,maxTicketLossUsd,extraCostPerShare});
   const d=recordPaperDecision(ticket,{decisionAt:p.at,modelVersion:p.modelVersion||'LEGACY_UNVERSIONED',source:'historical-forecast-snapshot'});
   ledger.push(d);
-  const r=resolved.get(p.ticker);
-  if(d.eligible&&r&&!conflicted.has(p.ticker)&&Number.isFinite(Date.parse(r.at))&&Date.parse(r.at)>=Date.parse(p.closeTime))ledger.push(recordPaperSettlement(d,{outcome:r.outcome,settledAt:r.at}));
+  const r=typeof p.id==='string'?resolved.get(p.id):null;
+  if(d.eligible&&r&&!conflicted.has(p.id)&&r.ticker===p.ticker&&Number.isFinite(Date.parse(r.at))&&Date.parse(r.at)>=Date.parse(p.closeTime))ledger.push(recordPaperSettlement(d,{outcome:r.outcome,settledAt:r.at}));
  }
  return {...summarizePaperLedger(ledger),conflictedContracts:conflicted.size,source:'Offline historical forecast log replay',retrospective:true,prospectivelyValidated:false,demonstratedTradableEdge:false,events:ledger};
 }
