@@ -37,3 +37,5 @@ jobs:
           grep -qi '<html' /tmp/karen-index.html
           curl --fail --silent http://127.0.0.1:38761/app.js > /dev/null
           curl --fail --silent http://127.0.0.1:38761/styles.css > /dev/null
+          curl --fail --silent http://127.0.0.1:38761/api/btc/diagnostics > /tmp/karen-diagnostics.json
+          node -e "const d=require('/tmp/karen-diagnostics.json');if(d.ok!==true||d.validated!==false||d.tradableEdgeDemonstrated!==false||typeof d.contracts!=='number')process.exit(1)"
