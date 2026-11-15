@@ -5,3 +5,6 @@ test('replay selects earliest forecast only and settles with verified-source out
 test('unverified resolution source cannot settle',()=>{const x=replayPaperEvents([f('a','2026-11-15T18:05:00Z'),{...r(),source:'unverified'}]);assert.equal(x.unsettled,1);});
 test('conflicting outcomes prevent settlement',()=>{const x=replayPaperEvents([f('a','2026-11-15T18:05:00Z'),r(1),r(0)]);assert.equal(x.settled,0);assert.equal(x.conflictedContracts,1);});
 test('filters model version without relabeling',()=>{const x=replayPaperEvents([f('a','2026-11-15T18:05:00Z'),r()],{modelVersion:'different'});assert.equal(x.decisions,0);});
+
+test('different forecast ID on same ticker cannot settle an earlier prediction',()=>{const x=replayPaperEvents([f('a','2026-11-15T18:05:00Z'),{...r(),id:'b'}]);assert.equal(x.settled,0);assert.equal(x.unsettled,1);});
+test('resolution for another ticker cannot settle matching forecast ID',()=>{const x=replayPaperEvents([f('a','2026-11-15T18:05:00Z'),{...r(),ticker:'B'}]);assert.equal(x.settled,0);});
