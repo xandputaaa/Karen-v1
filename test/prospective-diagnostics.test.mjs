@@ -13,6 +13,6 @@ test('pending, mismatched and invalid records cannot become wins',()=>{
 });
 test('horizon and model version filtering; correct Brier and baselines',()=>{
  const e=[f('a','A','2026-11-15T12:05:00Z',.8),r('a','A',1),f('b','B','2026-11-15T12:05:00Z',.3),r('b','B',0),f('c','C','2026-11-15T12:05:00Z',.9,'other'),r('c','C',0)];
- const d=prospectiveDiagnostics(e,{modelVersion:'frozen',horizonSeconds:600});assert.equal(d.settled,2);assert.equal(d.accuracy,1);assert.equal(d.brier,.065);assert.equal(d.alwaysUpAccuracy,.5);assert.equal(d.calibration.reduce((s,x)=>s+x.count,0),2);
+ const d=prospectiveDiagnostics(e,{modelVersion:'frozen',horizonSeconds:600});assert.equal(d.settled,2);assert.equal(d.accuracy,1);assert.ok(Math.abs(d.brier-.065)<1e-12);assert.equal(d.alwaysUpAccuracy,.5);assert.equal(d.calibration.reduce((s,x)=>s+x.count,0),2);
 });
 test('Wilson interval bounds and empty cohort',()=>{assert.equal(wilsonInterval(0,0),null);assert.equal(prospectiveDiagnostics([]).accuracy,null);assert.ok(wilsonInterval(5,10).lower<.5);assert.throws(()=>wilsonInterval(11,10));});
