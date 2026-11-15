@@ -39,3 +39,5 @@ jobs:
           curl --fail --silent http://127.0.0.1:38761/styles.css > /dev/null
           curl --fail --silent http://127.0.0.1:38761/api/btc/diagnostics > /tmp/karen-diagnostics.json
           node -e "const d=require('/tmp/karen-diagnostics.json');if(d.ok!==true||d.validated!==false||d.tradableEdgeDemonstrated!==false||typeof d.contracts!=='number')process.exit(1)"
+          curl --fail --silent http://127.0.0.1:38761/api/btc/paper-performance > /tmp/karen-paper.json
+          node -e "const p=require('/tmp/karen-paper.json');if(p.ok!==true||p.mode!=='PAPER_ONLY'||p.realOrdersPlaced!==0||p.actualProfitUsd!==null)process.exit(1)"
